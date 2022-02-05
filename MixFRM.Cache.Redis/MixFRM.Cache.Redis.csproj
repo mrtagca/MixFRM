@@ -5,11 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.2.88" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MixFRM.Interfaces\MixFRM.Interfaces.csproj" />
+    <ProjectReference Include="..\MixFRM.Utils\MixFRM.Utils.csproj" />
   </ItemGroup>
 
 </Project>
