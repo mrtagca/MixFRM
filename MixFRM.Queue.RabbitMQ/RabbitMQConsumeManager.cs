@@ -40,7 +40,7 @@ namespace MixFRM.Queue.RabbitMQ
 
                 consumer.Received += new EventHandler<BasicDeliverEventArgs>(eventHandler);
 
-                _channel.BasicConsume(queue: "test2",
+                _channel.BasicConsume(queue: queueOptions.QueueName,
                                      autoAck: autoAck,//true ise mesaj otomatik olarak kuyruktan silinir
                                      consumer: consumer);
                 Console.ReadKey();
