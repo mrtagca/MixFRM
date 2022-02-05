@@ -10,7 +10,6 @@ namespace MixFRM.Interfaces.Cache
         bool Clear();
         T Get<T>(string cacheKey);
         bool Contains(object cacheKey);
-
         void Remove(object cacheKey);
 
     }
