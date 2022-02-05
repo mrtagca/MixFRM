@@ -4,4 +4,12 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" Version="2.2.88" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MixFRM.Interfaces\MixFRM.Interfaces.csproj" />
+  </ItemGroup>
+
 </Project>
