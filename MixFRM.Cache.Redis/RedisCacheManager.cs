@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.Extensions.Configuration;
 using MixFRM.Interfaces.Cache;
 using MixFRM.Utils.Json;
 using StackExchange.Redis;
@@ -14,25 +15,32 @@ namespace MixFRM.Cache.Redis
     {
         private IDatabase _database;
         private RedisCacheOptions options;
-        private string cacheProvider = ConfigurationManager.AppSettings.Get("CacheProvider");
         private string defaultConnectionString { get; set; }
         private static ConnectionMultiplexer _connectionMultiplexer;
 
         public RedisCacheManager()
         {
-            defaultConnectionString = ConfigurationManager.AppSettings.Get("CacheConnectionString:Redis");
+            IConfiguration appSetting = new ConfigurationBuilder()
+                     .SetBasePath(System.AppDomain.CurrentDomain.BaseDirectory)
+                     .AddJsonFile("appsettings.json")
+                     .Build();
+            IConfigurationSection section = appSetting.GetSection("CacheConfiguration");
+
+            defaultConnectionString = section.GetSection("CacheConnectionString:Redis").Value;
+
             options = new RedisCacheOptions()
             {
                 Configuration = defaultConnectionString
             };
             _connectionMultiplexer = ConnectionMultiplexer.Connect(defaultConnectionString);
+            _database = _connectionMultiplexer.GetDatabase(int.Parse(section.GetSection("CacheConnectionString:Database").Value));
         }
 
         public T Get<T>(string cacheKey)
         {
-            using (var redisCache = new RedisCache(options))
+            try
             {
-                var value = Encoding.UTF8.GetString(redisCache.Get(cacheKey));
+                var value = Encoding.UTF8.GetString(_database.StringGet(cacheKey));
 
                 if (!string.IsNullOrEmpty(value))
                 {
@@ -42,29 +50,35 @@ namespace MixFRM.Cache.Redis
 
                 return default(T);
             }
+            catch (Exception ex)
+            {
+                return default(T);
+            }
         }
 
-        public void Set<T>(string cacheKey, T model)
+        public bool Set<T>(string cacheKey, T model)
         {
-            var cacheOptions = new DistributedCacheEntryOptions
+            try
             {
-                AbsoluteExpiration = DateTime.Now.AddMinutes(90)
-            };
+                var cacheOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpiration = DateTime.Now.AddMinutes(90)
+                };
 
-            using (var redisCache = new RedisCache(options))
-            {
+                var redisCache = new RedisCache(options);
                 var valueString = FrmJsonSerializer.Serialize(model);
-                redisCache.SetString(cacheKey, valueString);
+                return _database.StringSet(cacheKey, valueString);
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
 
         }
 
-        public void Remove(object key)
+        public bool Remove(object key)
         {
-            using (var redisCache = new RedisCache(options))
-            {
-                redisCache.Remove((string)key);
-            }
+            return _database.KeyDelete((string)key);
         }
 
         public bool Clear()
@@ -88,7 +102,7 @@ namespace MixFRM.Cache.Redis
 
         public bool Contains(object key)
         {
-            return _database.KeyExists((RedisKey)key);
+            return _database.KeyExists((string)key);
 
         }
 
